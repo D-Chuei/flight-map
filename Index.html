@@ -68,18 +68,23 @@
             text-decoration: underline;
         }
 
+        /* Laptop (default) */
         @media (min-width: 1024px) {
             .container { flex-direction: row; }
             #sidebar { width: 320px; height: 100vh; }
             #sidebar h3 { font-size: 1.6em; }
             .flight-item { font-size: 1em; }
         }
+
+        /* Tablet */
         @media (max-width: 1023px) and (min-width: 768px) {
             .container { flex-direction: row; }
             #sidebar { width: 260px; height: 100vh; }
             #sidebar h3 { font-size: 1.4em; }
             .flight-item { font-size: 0.9em; padding: 10px 12px; }
         }
+
+        /* Mobile */
         @media (max-width: 767px) {
             .container { 
                 flex-direction: column; 
@@ -100,6 +105,8 @@
                 width: 100%;
             }
         }
+
+        /* Small Mobile */
         @media (max-width: 480px) {
             #sidebar { padding: 15px; max-height: 50vh; }
             #sidebar h3 { font-size: 1.1em; }
@@ -170,27 +177,6 @@
             }, 50);
         }
 
-        function selectRoute(index) {
-            if (activeRoute !== null) {
-                document.querySelector('.flight-item.active')?.classList.remove('active');
-                routes.get(activeRoute).setStyle({ weight: 2, opacity: 0.7 });
-            }
-
-            const listItem = flightList.children[index];
-            listItem.classList.add('active');
-            const route = routes.get(index);
-            route.setStyle({ weight: 5, opacity: 1 });
-            activeRoute = index;
-
-            routes.forEach((r, i) => {
-                if (i !== index) r.setStyle({ opacity: 0.3, weight: 2 });
-            });
-
-            const dest = destinations[index];
-            animatePlane(planes.get(index), juba, dest.coords);
-            map.fitBounds([juba, dest.coords], { padding: [50, 50] });
-        }
-
         destinations.forEach((dest, index) => {
             const route = L.polyline([juba, dest.coords], {
                 color: '#3498db',
@@ -209,7 +195,24 @@
                 <span>${dest.name.split(' - ')[0]}</span>
                 <a href="${dest.link}" target="_blank">Book</a>
             `;
-            listItem.onclick = () => selectRoute(index);
+            listItem.onclick = () => {
+                if (activeRoute !== null) {
+                    document.querySelector('.flight-item.active')?.classList.remove('active');
+                    routes.get(activeRoute).setStyle({ weight: 2, opacity: 0.7 });
+                }
+
+                listItem.classList.add('active');
+                const route = routes.get(index);
+                route.setStyle({ weight: 5, opacity: 1 });
+                activeRoute = index;
+
+                routes.forEach((r, i) => {
+                    if (i !== index) r.setStyle({ opacity: 0.3, weight: 2 });
+                });
+
+                animatePlane(planes.get(index), juba, dest.coords);
+                map.fitBounds([juba, dest.coords], { padding: [50, 50] });
+            };
             flightList.appendChild(listItem);
 
             L.marker(dest.coords).addTo(map).bindPopup("<b>" + dest.name + "</b>");
@@ -228,19 +231,7 @@
             }
         });
 
-        // Handle URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const from = urlParams.get('from');
-        const to = urlParams.get('to');
-        if (from === 'Juba' && to) {
-            const destIndex = destinations.findIndex(dest => 
-                dest.name.split(' - ')[0].includes(to)
-            );
-            if (destIndex !== -1) {
-                selectRoute(destIndex);
-            }
-        }
-
+        // Adjust map size on window resize
         window.addEventListener('resize', () => {
             map.invalidateSize();
         });
